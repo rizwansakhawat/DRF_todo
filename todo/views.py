@@ -1,23 +1,74 @@
 from .models import Task
-from .serializers import TaskSerializer
+from .serializers import TaskSerializer, UserSerializer
 from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics, permissions
+from django.contrib.auth.models import User
+from .permission import IsOwnerOrReadOnly
 
 
-from rest_framework.generics import RetrieveUpdateDestroyAPIView
-from rest_framework.generics import ListCreateAPIView
+class UserList(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
-class TaskList(ListCreateAPIView):
+
+class UserDetail(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+#########  class base view with mixins
+from rest_framework import mixins
+from rest_framework import generics
+
+# list of all tasks
+class TaskList(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
+    
+    queryset= Task.objects.all()
+    serializer_class = TaskSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+    
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+    
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+    
+# task detail view    
+class TaskDetail(
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    generics.GenericAPIView,
+):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+    
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+    
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+    
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+    
 
 
-class TaskDetail(RetrieveUpdateDestroyAPIView):
-    queryset = Task.objects.all()
-    serializer_class = TaskSerializer
 
+
+
+
+
+
+######## class base views
 
 # class TaskList(APIView):
 #     """all tasks list """
@@ -65,6 +116,20 @@ class TaskDetail(RetrieveUpdateDestroyAPIView):
 
 
 
+
+
+#######  generic base views
+
+# from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView
+
+# class TaskList(ListCreateAPIView):
+#     queryset = Task.objects.all()
+#     serializer_class = TaskSerializer
+
+
+# class TaskDetail(RetrieveUpdateDestroyAPIView):
+#     queryset = Task.objects.all()
+#     serializer_class = TaskSerializer
 
 
 

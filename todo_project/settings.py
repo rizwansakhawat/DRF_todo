@@ -27,7 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 # Application definition
 
 INSTALLED_APPS = [
@@ -42,10 +42,15 @@ INSTALLED_APPS = [
     'todo',
 ]
 
-REST_FRAMEWORK = {
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 10,
-}
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': [
+#         # 'rest_framework.authentication.BasicAuthentication',
+#         'rest_framework.authentication.SessionAuthentication',
+#     ],
+#     'DEFAULT_PERMISSION_CLASSES': [
+#         'rest_framework.permissions.IsAuthenticatedOrReadOnly',  #IsAuthenticated ,#AllowAny
+#     ],
+# }
 
 
 
