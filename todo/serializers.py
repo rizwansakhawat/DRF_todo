@@ -19,10 +19,10 @@ class TaskSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at"]
         
 class UserSerializer(serializers.ModelSerializer):
-    # tasks = serializers.PrimaryKeyRelatedField(
-    #     many=True, queryset=Task.objects.all()
-    # )
-    tasks = TaskSerializer(many=True, read_only=True)
+    tasks = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Task.objects.all()
+    )
+    # tasks = TaskSerializer(many=True, read_only=True)
 
 
     class Meta:
