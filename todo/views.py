@@ -1,5 +1,5 @@
-from .models import Task
-from .serializers import TaskSerializer, UserSerializer
+from .models import Task, Category
+from .serializers import TaskSerializer, UserSerializer, CaterorySerializer
 from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -16,14 +16,17 @@ def api_root(request, format=None):
         {
             "users": reverse("user_list", request=request, format=format),
             "tasks": reverse("task_list", request=request, format=format),
+            "category": reverse("category_list", request=request, format=format)
         }
     )
-
-
 
 class UserList(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+class CategoryList(generics.ListAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CaterorySerializer
 
 
 class UserDetail(generics.RetrieveAPIView):
@@ -48,7 +51,7 @@ class TaskList(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericA
         return self.create(request, *args, **kwargs)
     
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        serializer.save(owner=self.request.user)
 
     
 # task detail view    
