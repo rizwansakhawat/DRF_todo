@@ -3,25 +3,32 @@ from .models import Task, Category
 from datetime import date
 from django.contrib.auth.models import User
 
-class CaterorySerializer(serializers.ModelSerializer):
-    tasks = serializers.HyperlinkedRelatedField(
-        many=True,
-        read_only=True,
-        view_name='task_detail')
-    # tasks = serializers.SlugRelatedField(many=True, read_only=True, slug_field='title')
-    # tasks = serializers.PrimaryKeyRelatedField(many=True , read_only=True)
-    
+class UserSerializer1(serializers.ModelSerializer):
+    # tasks = serializers.HyperlinkedRelatedField(many=True, read_only=True, view_name= 'task_detail')
+    # # tasks = serializers.SlugRelatedField(
+    # #     many=True,
+    # #     read_only=True,
+    # #     slug_field='title'
+    # #  )
+
+    # # tasks = serializers.PrimaryKeyRelatedField(
+    # #     many=True, queryset=Task.objects.all()
+    # # )
 
 
     class Meta:
-        model = Category
-        fields = ['id',  'name', 'created_at', 'tasks']
+        model = User
+        fields = ["id", "username"]
+        
+        
 
 
 
 class TaskSerializer(serializers.ModelSerializer):
-    owner = serializers.StringRelatedField(source="owner.username")
+    # owner = serializers.StringRelatedField(source="owner.username")
+    owner = UserSerializer1(read_only = True)
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+    
     
     def validate_due_date(self, value):
         """
@@ -39,10 +46,16 @@ class TaskSerializer(serializers.ModelSerializer):
         
         
 class UserSerializer(serializers.ModelSerializer):
+    tasks = serializers.HyperlinkedRelatedField(many=True, read_only=True, view_name= 'task_detail')
+    # # tasks = serializers.SlugRelatedField(
+    # #     many=True,
+    # #     read_only=True,
+    # #     slug_field='title'
+    # #  )
 
-    tasks = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Task.objects.all()
-    )
+    # # tasks = serializers.PrimaryKeyRelatedField(
+    # #     many=True, queryset=Task.objects.all()
+    # # )
     
     # tasks = TaskSerializer(many=True, read_only=True)
 
@@ -50,6 +63,32 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "username", "tasks"]
+        
+        
+
+        
+class CaterorySerializer(serializers.ModelSerializer):
+    # tasks = serializers.HyperlinkedRelatedField(
+    #     many=True,
+    #     read_only=True,
+    #     view_name='task_detail')
+    # tasks = serializers.SlugRelatedField(many=True, read_only=True, slug_field='title')
+    # tasks = serializers.PrimaryKeyRelatedField(many=True , read_only=True)
+    
+    tasks= TaskSerializer(many=True, read_only=True)
+    
+
+
+    class Meta:
+        model = Category
+        fields = ['id',  'name' , 'created_at', 'tasks']
+    
+    def create(self, validated_data):
+        task_data = validated_data.pop('tasks')
+        category = Task.objects.create(**validated_data)
+        for task_data in task_data:
+            Task.objects.create(category=category, **task_data)
+        return category
 
 
 

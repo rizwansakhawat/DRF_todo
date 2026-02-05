@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'drf_spectacular',
     
     'rest_framework',
     'todo',
@@ -53,7 +54,9 @@ INSTALLED_APPS = [
 # }
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 10,
+    "PAGE_SIZE": 2,
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+
 }
 
 
@@ -137,3 +140,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+
+SPECTACULAR_SETTINGS = {
+"TITLE":"todo" , "DESCRIPTION":"API for todo",
+"VERSION":"1.0.0",
+"SERVE_INCLUDE_SCHEMA":False
+}
+# Other Settin
