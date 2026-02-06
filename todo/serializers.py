@@ -14,8 +14,6 @@ class UserSerializer1(serializers.ModelSerializer):
     # # tasks = serializers.PrimaryKeyRelatedField(
     # #     many=True, queryset=Task.objects.all()
     # # )
-
-
     class Meta:
         model = User
         fields = ["id", "username"]
@@ -29,6 +27,8 @@ class TaskSerializer(serializers.ModelSerializer):
     owner = UserSerializer1(read_only = True)
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
     
+    url = serializers.HyperlinkedIdentityField(view_name="task_detail", read_only=True)
+    
     
     def validate_due_date(self, value):
         """
@@ -41,7 +41,7 @@ class TaskSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Task
-        fields = ["id", "title", 'due_date', "order" ,"content",  "status" ,  "owner" , "category" , "created_at"]
+        fields = ["id", "url", "title", 'due_date', "order" ,"content",  "status" ,  "owner" , "category" , "created_at"]
         read_only_fields = ["id","owner",  "created_at"]
         
         
@@ -65,8 +65,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["id", "username", "tasks"]
         
         
-
-        
 class CaterorySerializer(serializers.ModelSerializer):
     # tasks = serializers.HyperlinkedRelatedField(
     #     many=True,
@@ -81,21 +79,12 @@ class CaterorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ['id',  'name' , 'created_at', 'tasks']
+        fields = ['id', 'name', 'created_at', 'user' , 'tasks']
     
-    def create(self, validated_data):
-        task_data = validated_data.pop('tasks')
-        category = Task.objects.create(**validated_data)
-        for task_data in task_data:
-            Task.objects.create(category=category, **task_data)
-        return category
-
-
-
-
-
-        
+    # def create(self, validated_data):
+    #     task_data = validated_data.pop('tasks')
+    #     category = Task.objects.create(**validated_data)
+    #     for task_data in task_data:
+    #         Task.objects.create(category=category, **task_data)
     
-        
-
-
+    #     return category

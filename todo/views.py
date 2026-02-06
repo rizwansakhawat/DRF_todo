@@ -3,11 +3,13 @@ from .serializers import TaskSerializer, UserSerializer, CaterorySerializer
 from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, generics, permissions
+from rest_framework import status, generics, permissions, viewsets, renderers
 from django.contrib.auth.models import User
-from .permission import IsOwnerOrReadOnly
+from .permission import IsOwnerOrReadOnly, IsOwnerIsAdminOrReadOnly
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
+from rest_framework.decorators import action
+
 
 ########### api root view
 @api_view(["GET"])
@@ -16,70 +18,116 @@ def api_root(request, format=None):
         {
             "users": reverse("user_list", request=request, format=format),
             "tasks": reverse("task_list", request=request, format=format),
-            "category": reverse("category_list", request=request, format=format)
-        }
-    )
+            "category": reverse("category_list", request=request, format=format),
+            # "create_category":reverse("create_category", request=request, format=format)  
+        })
 
-class UserList(generics.ListAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+##### viewsets& routers
 
-class CategoryList(generics.ListAPIView):
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    This viewset automatically provides `list` and `retrieve` actions.
+    """
+    queryset =User.objects.all()
+    serializer_class= UserSerializer
+    
+class TaskviewSet(viewsets.ModelViewSet):
+    """
+    This ViewSet automatically provides `list`, `create`, `retrieve`,
+    `update` and `destroy` actions.
+
+    Additionally we also provide an extra `highlight` action.
+    """
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    
+    @action(detail=True, renderer_classes=[renderers.StaticHTMLRenderer])
+    def highlight(self, request, *args, **kwargs):
+        task = self.get_object()
+        return Response(task.highlighted)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CaterorySerializer
 
 
-class UserDetail(generics.RetrieveAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-#########  class base view with mixins
-from rest_framework import mixins
-from rest_framework import generics
-
-# list of all tasks
-class TaskList(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
-    
-    queryset= Task.objects.all()
-    serializer_class = TaskSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-    
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
-    
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
 
     
-# task detail view    
-class TaskDetail(
-    mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
-    generics.GenericAPIView,
-):
-    queryset = Task.objects.all()
-    serializer_class = TaskSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+ 
+    
+    
+#==========================================
+# ######## generics class base 
+
+# class UserList(generics.ListAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+
+# class CategoryList(generics.ListAPIView):
+#     queryset = Category.objects.all()
+#     serializer_class = CaterorySerializer
+    
+# class CreateCategory(generics.ListCreateAPIView):
+#     queryset= Category.objects.all()
+#     serializer_class = CaterorySerializer
+#     permission_classes = [permissions.IsAdminUser]
+
+
+# class UserDetail(generics.RetrieveAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+
+# #########  class base view with mixins
+# from rest_framework import mixins
+# from rest_framework import generics
+
+# # list of all tasks
+# class TaskList(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
+    
+#     queryset= Task.objects.all()
+#     serializer_class = TaskSerializer
+#     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+#     def get(self, request, *args, **kwargs):
+#         return self.list(request, *args, **kwargs)
+    
+#     def post(self, request, *args, **kwargs):
+#         return self.create(request, *args, **kwargs)
+    
+#     def perform_create(self, serializer):
+#         serializer.save(owner=self.request.user)
 
     
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
+# # task detail view    
+# class TaskDetail(
+#     mixins.RetrieveModelMixin,
+#     mixins.UpdateModelMixin,
+#     mixins.DestroyModelMixin,
+#     generics.GenericAPIView,
+# ):
+#     queryset = Task.objects.all()
+#     serializer_class = TaskSerializer
+#     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerIsAdminOrReadOnly]
 
     
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
+#     def get(self, request, *args, **kwargs):
+#         return self.retrieve(request, *args, **kwargs)
+
     
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
+#     def put(self, request, *args, **kwargs):
+#         return self.update(request, *args, **kwargs)
     
+#     def delete(self, request, *args, **kwargs):
+#         return self.destroy(request, *args, **kwargs)
+    
+# ### end genirc class base view
 
 
-
-
+#=============================================
 
 
 
